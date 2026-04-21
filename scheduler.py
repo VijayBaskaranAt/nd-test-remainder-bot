@@ -16,7 +16,7 @@ from utils import load_logs
 
 # How far back (in minutes) to look for missed runs.
 # Should be slightly larger than the GitHub Actions cron interval.
-LOOKBACK_MINUTES = 10
+LOOKBACK_MINUTES = 20
 
 
 def get_due_reminders(reminders: list[dict]) -> list[dict]:
@@ -99,7 +99,7 @@ def _already_ran(reminder_id: str, fire_time: datetime) -> bool:
         try:
             entry_ts = datetime.fromisoformat(entry["timestamp"].replace("Z", "+00:00"))
             diff = abs((entry_ts - fire_time.astimezone(pytz.utc)).total_seconds())
-            if diff < 120:  # within 2 minutes → already handled
+            if diff < 300:  # within 2 minutes → already handled
                 return True
         except (ValueError, KeyError):
             continue
