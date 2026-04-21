@@ -17,9 +17,10 @@ reminders:
 
   - id: weekly_report
     message: "Weekly report {{date}}"
-    schedule: "*/5 * * * *"
+    schedule: "* * * * *"
     timezone: "Asia/Kolkata"
     enabled: true
     channels:
       - google_chat
       - email
+
