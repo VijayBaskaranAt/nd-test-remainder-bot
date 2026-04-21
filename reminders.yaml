@@ -7,15 +7,6 @@ reminders:
     channels:
       - google_chat
 
-  - id: weekly_report
-    message: "Weekly report {{date}}"
-    schedule: "* * * * *"
-    timezone: "Asia/Kolkata"
-    enabled: true
-    channels:
-      - google_chat
-      - email
-
   - id: invoice_followup
     message: "Follow up on invoice for {{month}} {{year}}"
     schedule_type: interval_days
