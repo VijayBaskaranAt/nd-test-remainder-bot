@@ -7,14 +7,6 @@ reminders:
     channels:
       - google_chat
 
-  - id: standup_reminder
-    message: "Daily standup reminder {{date}}"
-    schedule: "*/5 * * * *"
-    timezone: "Asia/Kolkata"
-    enabled: true
-    channels:
-      - google_chat
-
   - id: weekly_report
     message: "Weekly report {{date}}"
     schedule: "* * * * *"
