@@ -558,6 +558,9 @@ async function loadLogs() {
 async function saveReminders(commitMsg) {
   try {
     const yaml = serializeYAML(state.reminders);
+    // Re-fetch latest SHA to avoid 409 when the CI bot has modified the file
+    const { sha: latestSha } = await readFile('reminders.yaml');
+    state.fileSha = latestSha;
     const result = await writeFile('reminders.yaml', yaml, state.fileSha, commitMsg);
     state.fileSha = result.content.sha;
     showToast('Changes saved to repository', 'success');
