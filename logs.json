@@ -47,6 +47,30 @@
       "timestamp": "2026-04-21T14:37:26.783744Z",
       "status": "success",
       "message": "Sent via email"
+    },
+    {
+      "reminder_id": "invoice_reminder",
+      "timestamp": "2026-04-21T15:53:27.254943Z",
+      "status": "success",
+      "message": "Sent via google_chat"
+    },
+    {
+      "reminder_id": "standup_reminder",
+      "timestamp": "2026-04-21T15:53:27.773752Z",
+      "status": "success",
+      "message": "Sent via google_chat"
+    },
+    {
+      "reminder_id": "weekly_report",
+      "timestamp": "2026-04-21T15:53:31.754011Z",
+      "status": "success",
+      "message": "Sent via google_chat"
+    },
+    {
+      "reminder_id": "weekly_report",
+      "timestamp": "2026-04-21T15:53:31.754356Z",
+      "status": "success",
+      "message": "Sent via email"
     }
   ]
 }
