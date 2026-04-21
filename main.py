@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+"""
+main.py – Entry point for the Reminder Bot.
+
+Flow:
+  1. Print startup banner
+  2. Load reminders from reminders.yaml
+  3. Determine which reminders are due (scheduler)
+  4. For each due reminder:
+      a. Render template variables
+      b. Send notifications to configured channels
+      c. Log the result
+  5. Exit
+"""
+
+import sys
+
+from notifier import send_notification
+from scheduler import get_due_reminders, get_next_run
+from utils import (
+    append_log,
+    load_reminders,
+    print_banner,
+    render_template,
+)
+
+
+def main() -> None:
+    print_banner()
+
+    # 1. Load config
+    reminders = load_reminders()
+    print(f"\n📋 Loaded {len(reminders)} reminder(s) from config.\n")
+
+    # Show next-run preview for each reminder
+    for r in reminders:
+        status = "🟢 enabled" if r.get("enabled", True) else "🔴 disabled"
+        try:
+            nxt = get_next_run(r["schedule"], r.get("timezone", "Asia/Kolkata"))
+        except Exception:
+            nxt = "invalid cron"
+        print(f"   • {r['id']:30s} {status:15s} next → {nxt}")
+
+    print()
+
+    # 2. Find due reminders
+    due = get_due_reminders(reminders)
+
+    if not due:
+        print("💤 No reminders due at this time.\n")
+        return
+
+    print(f"🔔 {len(due)} reminder(s) due – processing …\n")
+
+    # 3. Process each due reminder
+    all_ok = True
+    for reminder in due:
+        rid = reminder["id"]
+        tz = reminder.get("timezone", "Asia/Kolkata")
+        raw_msg = reminder.get("message", "")
+        channels = reminder.get("channels", [])
+
+        # Render template variables
+        message = render_template(raw_msg, tz)
+        print(f"── {rid} ──")
+        print(f"   Message : {message}")
+        print(f"   Channels: {', '.join(channels)}")
+
+        # Send notifications
+        results = send_notification(message, channels)
+
+        # Log results
+        for channel, ok in results.items():
+            if ok:
+                append_log(rid, "success", f"Sent via {channel}")
+            else:
+                append_log(rid, "failure", f"Failed via {channel}")
+                all_ok = False
+
+        print()
+
+    # Summary
+    if all_ok:
+        print("✅ All notifications sent successfully.")
+    else:
+        print("⚠️  Some notifications failed – check logs.json for details.")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

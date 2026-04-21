@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reminder Bot – Dashboard</title>
+  <meta name="description" content="Manage your automated reminders. View schedules, add/edit/delete reminders, and send test notifications." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- cronstrue for human-readable cron -->
+  <script src="https://unpkg.com/cronstrue@2.50.0/dist/cronstrue.min.js"></script>
+  <!-- cron-parser for next-run calculation -->
+  <script src="https://cdn.jsdelivr.net/npm/cron-parser@4.9.0/lib/expression.js" type="module"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ===== HEADER ===== -->
+  <header id="app-header">
+    <div class="header-inner">
+      <div class="logo-group">
+        <span class="logo-icon">🔔</span>
+        <h1>Reminder Bot</h1>
+      </div>
+      <div class="header-actions">
+        <button id="btn-settings" class="btn btn-ghost" title="GitHub Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.32 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== SETTINGS MODAL ===== -->
+  <div id="settings-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>⚙️ GitHub Settings</h2>
+        <button class="modal-close" id="settings-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="settings-note">Connect to your GitHub repository to manage reminders. Your token is stored <strong>locally in your browser</strong> only.</p>
+        <div class="form-group">
+          <label for="gh-owner">Repository Owner</label>
+          <input type="text" id="gh-owner" placeholder="e.g. myorg" />
+        </div>
+        <div class="form-group">
+          <label for="gh-repo">Repository Name</label>
+          <input type="text" id="gh-repo" placeholder="e.g. reminder-bot" />
+        </div>
+        <div class="form-group">
+          <label for="gh-branch">Branch</label>
+          <input type="text" id="gh-branch" placeholder="main" value="main" />
+        </div>
+        <div class="form-group">
+          <label for="gh-token">Personal Access Token (PAT)</label>
+          <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx" />
+          <small>Needs <code>repo</code> scope. <a href="https://github.com/settings/tokens/new?scopes=repo" target="_blank">Create one →</a></small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="settings-cancel">Cancel</button>
+        <button class="btn btn-primary" id="settings-save">Save & Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN ===== -->
+  <main id="app-main">
+    <!-- Connection status bar -->
+    <div id="status-bar" class="status-bar status-disconnected">
+      <span id="status-text">Not connected – configure GitHub settings to get started</span>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <h2 id="reminder-count">Reminders</h2>
+      </div>
+      <div class="toolbar-right">
+        <button id="btn-refresh" class="btn btn-ghost" title="Refresh">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Refresh
+        </button>
+        <button id="btn-add" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Reminder
+        </button>
+      </div>
+    </div>
+
+    <!-- Reminders Table -->
+    <div class="table-wrapper">
+      <table id="reminders-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>ID</th>
+            <th>Message</th>
+            <th>Schedule</th>
+            <th>Next Run</th>
+            <th>Channels</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="reminders-body">
+          <tr>
+            <td colspan="7" class="empty-state">
+              <div class="empty-state-content">
+                <span class="empty-icon">📭</span>
+                <p>No reminders loaded</p>
+                <small>Configure GitHub settings to connect</small>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Recent Logs -->
+    <div class="logs-section">
+      <h3>📜 Recent Run Logs</h3>
+      <div id="logs-container" class="logs-container">
+        <p class="logs-empty">No logs available</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== ADD / EDIT MODAL ===== -->
+  <div id="reminder-modal" class="modal-overlay hidden">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h2 id="modal-title">Add Reminder</h2>
+        <button class="modal-close" id="reminder-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="rem-id">Reminder ID</label>
+            <input type="text" id="rem-id" placeholder="e.g. invoice_reminder" />
+            <small>Unique snake_case identifier</small>
+          </div>
+          <div class="form-group flex-1">
+            <label for="rem-timezone">Timezone</label>
+            <input type="text" id="rem-timezone" value="Asia/Kolkata" placeholder="Asia/Kolkata" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="rem-message">Message</label>
+          <textarea id="rem-message" rows="3" placeholder="e.g. 💰 Send invoice for {{month}} {{year}}"></textarea>
+          <small>Supports: <code>{{month}}</code>, <code>{{date}}</code>, <code>{{year}}</code>, <code>{{day}}</code>, <code>{{time}}</code></small>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="rem-schedule">Cron Schedule</label>
+            <input type="text" id="rem-schedule" placeholder="0 9 2 * *" />
+            <small id="cron-preview" class="cron-preview"></small>
+          </div>
+          <div class="form-group flex-1">
+            <label for="rem-channels">Channels</label>
+            <div class="channel-checkboxes">
+              <label class="checkbox-label"><input type="checkbox" id="ch-google-chat" value="google_chat" checked /> Google Chat</label>
+              <label class="checkbox-label"><input type="checkbox" id="ch-email" value="email" /> Email</label>
+              <label class="checkbox-label"><input type="checkbox" id="ch-webhook" value="webhook" /> Webhook</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="rem-team">Team <span class="optional">(optional)</span></label>
+            <input type="text" id="rem-team" placeholder="e.g. engineering" />
+          </div>
+          <div class="form-group flex-1">
+            <label for="rem-tags">Tags <span class="optional">(optional)</span></label>
+            <input type="text" id="rem-tags" placeholder="e.g. billing, monthly" />
+            <small>Comma-separated</small>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="rem-enabled" checked />
+            <strong>Enabled</strong> – reminder will fire on schedule
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="reminder-cancel">Cancel</button>
+        <button class="btn btn-primary" id="reminder-save">Save Reminder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DELETE CONFIRM MODAL ===== -->
+  <div id="delete-modal" class="modal-overlay hidden">
+    <div class="modal modal-small">
+      <div class="modal-header">
+        <h2>🗑️ Delete Reminder</h2>
+        <button class="modal-close" id="delete-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete <strong id="delete-id"></strong>?</p>
+        <p class="delete-warning">This will commit the change to your repository.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="delete-cancel">Cancel</button>
+        <button class="btn btn-danger" id="delete-confirm">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
