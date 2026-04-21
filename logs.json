@@ -95,6 +95,24 @@
       "timestamp": "2026-04-21T17:00:59.185865Z",
       "status": "success",
       "message": "Sent via email"
+    },
+    {
+      "reminder_id": "standup_reminder",
+      "timestamp": "2026-04-21T18:11:21.982610Z",
+      "status": "success",
+      "message": "Sent via google_chat"
+    },
+    {
+      "reminder_id": "weekly_report",
+      "timestamp": "2026-04-21T18:11:23.679732Z",
+      "status": "success",
+      "message": "Sent via google_chat"
+    },
+    {
+      "reminder_id": "weekly_report",
+      "timestamp": "2026-04-21T18:11:23.680160Z",
+      "status": "success",
+      "message": "Sent via email"
     }
   ]
 }
