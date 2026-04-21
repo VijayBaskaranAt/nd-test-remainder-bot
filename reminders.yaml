@@ -27,11 +27,10 @@ reminders:
 
   - id: weekly_report
     message: "ð Weekly report due â Week of {{date}}"
-    schedule: "0 17 * * 5"
+    schedule: "* * * * *"
     timezone: "Asia/Kolkata"
     enabled: true
     channels:
-      - google_chat
       - email
     metadata:
       team: "management"
