@@ -10,6 +10,7 @@ Includes a fully working **web dashboard** (GitHub Pages) for managing reminders
 
 - **Config-driven** — reminders defined in `reminders.yaml`
 - **Cron scheduling** — standard 5-field cron expressions
+- **Interval scheduling** — every X days starting from a specific date
 - **Timezone support** — per-reminder timezone (default: `Asia/Kolkata`)
 - **Multiple channels** — Google Chat webhook, Email (SMTP), generic Webhook
 - **Template variables** — `{{month}}`, `{{date}}`, `{{year}}`, `{{day}}`, `{{time}}`
@@ -99,9 +100,11 @@ Your token is stored **locally in your browser** — it is never sent anywhere e
 ## ⚙️ Reminder Config
 
 ```yaml
+```yaml
 reminders:
   - id: invoice_reminder
     message: "💰 Send invoice for {{month}} {{year}}"
+    schedule_type: cron
     schedule: "0 9 2 * *"
     timezone: "Asia/Kolkata"
     enabled: true
@@ -112,6 +115,16 @@ reminders:
       tags:
         - billing
         - monthly
+
+  - id: follow_up
+    message: "🔄 Follow up today"
+    schedule_type: interval_days
+    interval_days: 14
+    start_date: "2026-05-01"
+    timezone: "America/New_York"
+    enabled: true
+    channels:
+      - email
 ```
 
 ### Template Variables

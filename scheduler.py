@@ -42,21 +42,29 @@ def get_due_reminders(reminders: list[dict]) -> list[dict]:
             continue
 
         now_local = now_utc.astimezone(tz)
-        cron_expr = reminder.get("schedule", "")
+        schedule_type = reminder.get("schedule_type", "cron")
 
-        if not cron_expr:
-            continue
+        if schedule_type == "cron":
+            cron_expr = reminder.get("schedule", "")
+            if not cron_expr:
+                continue
 
-        try:
-            if _is_due(cron_expr, now_local, reminder["id"]):
-                due.append(reminder)
-        except (ValueError, KeyError) as exc:
-            print(f"⚠️  Error checking schedule for {reminder.get('id', '?')}: {exc}")
+            try:
+                if _is_due_cron(cron_expr, now_local, reminder["id"]):
+                    due.append(reminder)
+            except (ValueError, KeyError) as exc:
+                print(f"⚠️  Error checking schedule for {reminder.get('id', '?')}: {exc}")
+        elif schedule_type == "interval_days":
+            try:
+                if _is_due_interval(reminder, now_local):
+                    due.append(reminder)
+            except Exception as exc:
+                print(f"⚠️  Error checking interval for {reminder.get('id', '?')}: {exc}")
 
     return due
 
 
-def _is_due(cron_expr: str, now_local: datetime, reminder_id: str) -> bool:
+def _is_due_cron(cron_expr: str, now_local: datetime, reminder_id: str) -> bool:
     """
     Check whether the cron expression has a fire time within the
     lookback window ending at *now_local*.
@@ -87,6 +95,44 @@ def _is_due(cron_expr: str, now_local: datetime, reminder_id: str) -> bool:
     return False
 
 
+def _is_due_interval(reminder: dict, now_local: datetime) -> bool:
+    """
+    Check whether the interval-based reminder should fire on this day.
+    Default execution time is set to 09:00 AM local time.
+    """
+    start_date_str = reminder.get("start_date")
+    interval = int(reminder.get("interval_days", 1))
+
+    if not start_date_str or interval <= 0:
+        return False
+        
+    try:
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        print(f"⚠️  Invalid start_date '{start_date_str}' for {reminder.get('id')}.")
+        return False
+
+    today = now_local.date()
+    # Check if we're on or past the start date
+    if today < start_date:
+        return False
+        
+    days_since_start = (today - start_date).days
+    if days_since_start % interval != 0:
+        return False
+        
+    # We default the fire time to 09:00 AM on the target day Local Time
+    target_time = now_local.replace(hour=9, minute=0, second=0, microsecond=0)
+    
+    window_start = now_local - timedelta(minutes=LOOKBACK_MINUTES)
+    
+    if window_start <= target_time <= now_local:
+        if not _already_ran(reminder.get("id"), target_time):
+            return True
+            
+    return False
+
+
 def _already_ran(reminder_id: str, fire_time: datetime) -> bool:
     """
     Check logs.json to see if we already executed this reminder
@@ -99,7 +145,7 @@ def _already_ran(reminder_id: str, fire_time: datetime) -> bool:
         try:
             entry_ts = datetime.fromisoformat(entry["timestamp"].replace("Z", "+00:00"))
             diff = abs((entry_ts - fire_time.astimezone(pytz.utc)).total_seconds())
-            if diff < 300:  # within 2 minutes → already handled
+            if diff < 300:  # within 5 minutes → already handled
                 return True
         except (ValueError, KeyError):
             continue

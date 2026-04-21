@@ -126,6 +126,9 @@ function parseYAML(text) {
         id: RegExp.$1.trim().replace(/^["']|["']$/g, ''),
         message: '',
         schedule: '',
+        schedule_type: 'cron',
+        interval_days: 0,
+        start_date: '',
         timezone: 'Asia/Kolkata',
         enabled: true,
         channels: [],
@@ -180,6 +183,15 @@ function parseYAML(text) {
     if (/^\s+message:\s*(.+)/.test(line)) {
       current.message = RegExp.$1.trim().replace(/^["']|["']$/g, '');
       inChannels = false; inMetadata = false; inTags = false;
+    } else if (/^\s+schedule_type:\s*(.+)/.test(line)) {
+      current.schedule_type = RegExp.$1.trim().replace(/^["']|["']$/g, '');
+      inChannels = false; inMetadata = false; inTags = false;
+    } else if (/^\s+interval_days:\s*(.+)/.test(line)) {
+      current.interval_days = parseInt(RegExp.$1.trim(), 10);
+      inChannels = false; inMetadata = false; inTags = false;
+    } else if (/^\s+start_date:\s*(.+)/.test(line)) {
+      current.start_date = RegExp.$1.trim().replace(/^["']|["']$/g, '');
+      inChannels = false; inMetadata = false; inTags = false;
     } else if (/^\s+schedule:\s*(.+)/.test(line)) {
       current.schedule = RegExp.$1.trim().replace(/^["']|["']$/g, '');
       inChannels = false; inMetadata = false; inTags = false;
@@ -200,7 +212,13 @@ function serializeYAML(reminders) {
   for (const r of reminders) {
     out += `  - id: ${r.id}\n`;
     out += `    message: "${r.message}"\n`;
-    out += `    schedule: "${r.schedule}"\n`;
+    if (r.schedule_type === 'interval_days') {
+      out += `    schedule_type: interval_days\n`;
+      out += `    interval_days: ${r.interval_days}\n`;
+      out += `    start_date: "${r.start_date}"\n`;
+    } else {
+      out += `    schedule: "${r.schedule}"\n`;
+    }
     out += `    timezone: "${r.timezone}"\n`;
     out += `    enabled: ${r.enabled}\n`;
     out += `    channels:\n`;
@@ -381,6 +399,11 @@ const dom = {
   deleteClose: $('#delete-close'),
   deleteCancel: $('#delete-cancel'),
   deleteConfirm: $('#delete-confirm'),
+  remScheduleType: $('#rem-schedule-type'),
+  cronContainer: $('#cron-container'),
+  intervalContainer: $('#interval-container'),
+  remIntervalDays: $('#rem-interval-days'),
+  remStartDate: $('#rem-start-date'),
 };
 
 // ============================================================================
@@ -405,8 +428,24 @@ function renderTable() {
   }
 
   dom.tbody.innerHTML = reminders.map(r => {
-    const human = humanCron(r.schedule);
-    const nextRuns = getNextRuns(r.schedule, 1);
+    let human = '';
+    let nextRuns = [];
+    if (r.schedule_type === 'interval_days') {
+        human = `Every ${r.interval_days} days from ${r.start_date}`;
+        // approximate next run
+        const start = new Date(r.start_date);
+        const now = new Date();
+        const diffMs = now.getTime() - start.getTime();
+        const diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        let nextInterval = Math.ceil(diffDays / r.interval_days) * r.interval_days;
+        if (nextInterval === 0 && start > now) nextInterval = 0; // hasn't started yet
+        // if today is exactly matching (diff%interval == 0), the next one might be today or later today. We'll simplify UI.
+        const nextDate = new Date(start.getTime() + nextInterval * 24 * 60 * 60 * 1000);
+        nextRuns = [nextDate];
+    } else {
+        human = humanCron(r.schedule);
+        nextRuns = getNextRuns(r.schedule, 1);
+    }
     const nextStr = nextRuns.length
       ? `<span class="next-run-time">${formatDate(nextRuns[0])}</span><span>${timeUntil(nextRuns[0])}</span>`
       : '<span>—</span>';
@@ -417,6 +456,8 @@ function renderTable() {
 
     const statusClass = r.enabled ? 'enabled' : 'disabled';
     const statusLabel = r.enabled ? 'Active' : 'Paused';
+
+    const scheduleCode = r.schedule_type === 'interval_days' ? `interval: ${r.interval_days}d` : r.schedule;
 
     return `
       <tr data-id="${r.id}">
@@ -430,7 +471,7 @@ function renderTable() {
         <td><span class="rem-message" title="${r.message}">${r.message}</span></td>
         <td>
           <div class="schedule-group">
-            <code class="schedule-cron">${r.schedule}</code>
+            <code class="schedule-cron">${scheduleCode}</code>
             <span class="schedule-human">${human}</span>
           </div>
         </td>
@@ -572,7 +613,10 @@ function openReminderModal(reminder = null) {
     dom.remId.value = reminder.id;
     dom.remId.disabled = true;
     dom.remMessage.value = reminder.message;
-    dom.remSchedule.value = reminder.schedule;
+    dom.remSchedule.value = reminder.schedule_type === 'cron' ? (reminder.schedule || '') : '';
+    dom.remScheduleType.value = reminder.schedule_type === 'interval_days' ? 'interval_days' : 'cron';
+    dom.remIntervalDays.value = reminder.interval_days || '';
+    dom.remStartDate.value = reminder.start_date || '';
     dom.remTimezone.value = reminder.timezone || 'Asia/Kolkata';
     dom.remEnabled.checked = reminder.enabled;
     dom.remTeam.value = reminder.metadata?.team || '';
@@ -586,6 +630,9 @@ function openReminderModal(reminder = null) {
     dom.remId.value = '';
     dom.remId.disabled = false;
     dom.remMessage.value = '';
+    dom.remScheduleType.value = 'cron';
+    dom.remIntervalDays.value = '';
+    dom.remStartDate.value = '';
     dom.remSchedule.value = '';
     dom.remTimezone.value = 'Asia/Kolkata';
     dom.remEnabled.checked = true;
@@ -595,6 +642,7 @@ function openReminderModal(reminder = null) {
     dom.chEmail.checked = false;
     dom.chWebhook.checked = false;
   }
+  dom.remScheduleType.dispatchEvent(new Event('change'));
   updateCronPreview();
   dom.reminderModal.classList.remove('hidden');
 }
@@ -619,6 +667,17 @@ function updateCronPreview() {
 }
 
 dom.remSchedule.addEventListener('input', updateCronPreview);
+
+dom.remScheduleType.addEventListener('change', () => {
+    if (dom.remScheduleType.value === 'interval_days') {
+        dom.cronContainer.style.display = 'none';
+        dom.intervalContainer.style.display = 'flex';
+    } else {
+        dom.cronContainer.style.display = 'flex';
+        dom.intervalContainer.style.display = 'none';
+    }
+});
+
 dom.btnAdd.addEventListener('click', () => openReminderModal());
 dom.reminderClose.addEventListener('click', closeReminderModal);
 dom.reminderCancel.addEventListener('click', closeReminderModal);
@@ -626,7 +685,10 @@ dom.reminderCancel.addEventListener('click', closeReminderModal);
 dom.reminderSave.addEventListener('click', async () => {
   const id = dom.remId.value.trim();
   const message = dom.remMessage.value.trim();
+  const scheduleType = dom.remScheduleType.value;
   const schedule = dom.remSchedule.value.trim();
+  const intervalDays = parseInt(dom.remIntervalDays.value, 10);
+  const startDate = dom.remStartDate.value.trim();
   const timezone = dom.remTimezone.value.trim() || 'Asia/Kolkata';
   const enabled = dom.remEnabled.checked;
   const team = dom.remTeam.value.trim();
@@ -639,17 +701,27 @@ dom.reminderSave.addEventListener('click', async () => {
   if (dom.chWebhook.checked) channels.push('webhook');
 
   // Validation
-  if (!id || !message || !schedule) {
-    showToast('ID, Message, and Schedule are required', 'error');
+  if (!id || !message) {
+    showToast('ID, and Message are required', 'error');
     return;
   }
   if (!/^[a-z0-9_]+$/.test(id)) {
     showToast('ID must be snake_case (lowercase, numbers, underscores)', 'error');
     return;
   }
-  if (!isValidCron(schedule)) {
+  if (scheduleType === 'cron' && !isValidCron(schedule)) {
     showToast('Invalid cron expression', 'error');
     return;
+  }
+  if (scheduleType === 'interval_days') {
+    if (isNaN(intervalDays) || intervalDays <= 0) {
+      showToast('Interval must be > 0', 'error');
+      return;
+    }
+    if (!startDate || !/^\d{4}-\d{2}-\d{2}$/.test(startDate) || isNaN(Date.parse(startDate))) {
+      showToast('Enter a valid Start Date (YYYY-MM-DD)', 'error');
+      return;
+    }
   }
   if (!channels.length) {
     showToast('Select at least one channel', 'error');
@@ -659,7 +731,10 @@ dom.reminderSave.addEventListener('click', async () => {
   const reminder = {
     id,
     message,
-    schedule,
+    schedule_type: scheduleType,
+    schedule: scheduleType === 'cron' ? schedule : '',
+    interval_days: scheduleType === 'interval_days' ? intervalDays : 0,
+    start_date: scheduleType === 'interval_days' ? startDate : '',
     timezone,
     enabled,
     channels,

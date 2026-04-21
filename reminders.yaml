@@ -24,3 +24,13 @@ reminders:
       - google_chat
       - email
 
+  - id: invoice_followup
+    message: "Follow up on invoice for {{month}} {{year}}"
+    schedule_type: interval_days
+    interval_days: 45
+    start_date: "2026-04-01"
+    timezone: "Asia/Kolkata"
+    enabled: true
+    channels:
+      - google_chat
+
