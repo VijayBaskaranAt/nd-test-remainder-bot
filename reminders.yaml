@@ -18,7 +18,9 @@ reminders:
 
   - id: invoice_followup
     message: "Follow up on invoice for {{month}} {{year}}"
-    schedule: "0 9 2 * *"
+    schedule_type: interval_days
+    interval_days: 45
+    start_date: "2026-04-01"
     timezone: "Asia/Kolkata"
     enabled: true
     channels:
