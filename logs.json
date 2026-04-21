@@ -1,3 +1,28 @@
 {
-  "runs": []
+  "runs": [
+    {
+      "reminder_id": "invoice_reminder",
+      "timestamp": "2026-04-21T14:11:19.887665Z",
+      "status": "success",
+      "message": "Sent via google_chat"
+    },
+    {
+      "reminder_id": "standup_reminder",
+      "timestamp": "2026-04-21T14:11:20.604757Z",
+      "status": "success",
+      "message": "Sent via google_chat"
+    },
+    {
+      "reminder_id": "weekly_report",
+      "timestamp": "2026-04-21T14:11:22.830116Z",
+      "status": "success",
+      "message": "Sent via google_chat"
+    },
+    {
+      "reminder_id": "weekly_report",
+      "timestamp": "2026-04-21T14:11:22.830390Z",
+      "status": "success",
+      "message": "Sent via email"
+    }
+  ]
 }
