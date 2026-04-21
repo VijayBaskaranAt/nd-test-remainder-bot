@@ -645,7 +645,7 @@ function openReminderModal(reminder = null) {
     dom.chEmail.checked = false;
     dom.chWebhook.checked = false;
   }
-  dom.remScheduleType.dispatchEvent(new Event('change'));
+  applyScheduleTypeToggle();
   updateCronPreview();
   dom.reminderModal.classList.remove('hidden');
 }
@@ -671,15 +671,17 @@ function updateCronPreview() {
 
 dom.remSchedule.addEventListener('input', updateCronPreview);
 
-dom.remScheduleType.addEventListener('change', () => {
-    if (dom.remScheduleType.value === 'interval_days') {
-        dom.cronContainer.style.display = 'none';
-        dom.intervalContainer.style.display = 'flex';
-    } else {
-        dom.cronContainer.style.display = 'flex';
-        dom.intervalContainer.style.display = 'none';
-    }
-});
+function applyScheduleTypeToggle() {
+  if (dom.remScheduleType.value === 'interval_days') {
+    dom.cronContainer.style.display = 'none';
+    dom.intervalContainer.style.display = 'flex';
+  } else {
+    dom.cronContainer.style.display = 'flex';
+    dom.intervalContainer.style.display = 'none';
+  }
+}
+
+dom.remScheduleType.addEventListener('change', applyScheduleTypeToggle);
 
 dom.btnAdd.addEventListener('click', () => openReminderModal());
 dom.reminderClose.addEventListener('click', closeReminderModal);
