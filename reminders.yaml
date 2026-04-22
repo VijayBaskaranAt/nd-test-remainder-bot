@@ -17,3 +17,13 @@ reminders:
     channels:
       - google_chat
 
+  - id: test
+    message: "Send invoice for {{month))"
+    schedule_type: interval_days
+    interval_days: 1
+    start_date: "2026-04-17"
+    timezone: "Asia/Kolkata"
+    enabled: true
+    channels:
+      - google_chat
+
