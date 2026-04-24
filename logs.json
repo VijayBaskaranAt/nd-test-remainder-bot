@@ -113,6 +113,12 @@
       "timestamp": "2026-04-21T18:11:23.680160Z",
       "status": "success",
       "message": "Sent via email"
+    },
+    {
+      "reminder_id": "test",
+      "timestamp": "2026-04-24T03:47:19.516052Z",
+      "status": "success",
+      "message": "Sent via google_chat"
     }
   ]
 }
