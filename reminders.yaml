@@ -19,9 +19,7 @@ reminders:
 
   - id: test
     message: "Send invoice for {{month))"
-    schedule_type: interval_days
-    interval_days: 1
-    start_date: "2026-04-17"
+    schedule: "0 9 2 * *"
     timezone: "Asia/Kolkata"
     enabled: true
     channels:
