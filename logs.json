@@ -137,6 +137,12 @@
       "timestamp": "2026-05-05T03:37:01.996742Z",
       "status": "success",
       "message": "Sent via google_chat"
+    },
+    {
+      "reminder_id": "test_remainder",
+      "timestamp": "2026-05-05T09:08:06.847993Z",
+      "status": "success",
+      "message": "Sent via email"
     }
   ]
 }
