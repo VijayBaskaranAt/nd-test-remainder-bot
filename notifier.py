@@ -75,21 +75,26 @@ def _send_email(message: str, recipients: list[str] | None = None) -> None:
     port = int(os.environ.get("EMAIL_PORT", "587"))
     user = os.environ.get("EMAIL_USER")
     password = os.environ.get("EMAIL_PASS")
-    default_to = os.environ.get("EMAIL_TO", user)
-    to_addr = ", ".join(recipients) if recipients else default_to
 
     if not user or not password:
         raise EnvironmentError("EMAIL_USER / EMAIL_PASS not set – skipping email.")
 
+    # Build recipient list: per-reminder list takes priority over EMAIL_TO env var
+    if recipients:
+        to_list = recipients
+    else:
+        default_to = os.environ.get("EMAIL_TO", user)
+        to_list = [addr.strip() for addr in default_to.split(",") if addr.strip()]
+
     msg = MIMEText(message)
     msg["Subject"] = "🔔 Reminder Bot Notification"
     msg["From"] = user
-    msg["To"] = to_addr
+    msg["To"] = ", ".join(to_list)
 
     with smtplib.SMTP(host, port, timeout=15) as server:
         server.starttls()
         server.login(user, password)
-        server.send_message(msg)
+        server.sendmail(user, to_list, msg.as_string())
 
 
 # ---------------------------------------------------------------------------

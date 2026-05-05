@@ -5,8 +5,13 @@ on:
   schedule:
     - cron: "*/10 * * * *"
 
-  # Allow manual trigger from GitHub UI
+  # Allow manual trigger from GitHub UI or test button
   workflow_dispatch:
+    inputs:
+      test_reminder_id:
+        description: "Reminder ID to test (leave blank for normal scheduled run)"
+        required: false
+        default: ""
 
 permissions:
   contents: write  # needed to commit logs.json updates
@@ -37,6 +42,7 @@ jobs:
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          TEST_REMINDER_ID: ${{ inputs.test_reminder_id }}
         run: python main.py
 
       - name: 💾 Commit updated logs

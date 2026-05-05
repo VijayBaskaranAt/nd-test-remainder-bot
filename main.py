@@ -13,6 +13,7 @@ Flow:
   5. Exit
 """
 
+import os
 import sys
 
 from notifier import send_notification
@@ -43,8 +44,16 @@ def main() -> None:
 
     print()
 
-    # 2. Find due reminders
-    due = get_due_reminders(reminders)
+    # 2. Find due reminders (or a specific one for testing)
+    test_id = os.environ.get("TEST_REMINDER_ID", "").strip()
+    if test_id:
+        due = [r for r in reminders if r["id"] == test_id]
+        if not due:
+            print(f"❌ Test reminder '{test_id}' not found.\n")
+            sys.exit(1)
+        print(f"🧪 Test mode – running '{test_id}' regardless of schedule.\n")
+    else:
+        due = get_due_reminders(reminders)
 
     if not due:
         print("💤 No reminders due at this time.\n")

@@ -893,9 +893,34 @@ dom.tbody.addEventListener('click', async (e) => {
       }
       break;
 
-    case 'test':
-      showToast(`🧪 Test notification for "${id}" – this requires the backend to be running.`, 'info');
+    case 'test': {
+      const c = getGHConfig();
+      if (!c.owner || !c.repo || !c.token) {
+        showToast('Configure GitHub settings first', 'error');
+        break;
+      }
+      try {
+        showToast(`🧪 Triggering test for "${id}" …`, 'info');
+        await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/actions/workflows/reminder.yml/dispatches`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${c.token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ref: c.branch, inputs: { test_reminder_id: id } }),
+        }).then(r => {
+          if (r.ok || r.status === 204) {
+            showToast(`✅ Test triggered for "${id}" – check GitHub Actions for results.`, 'success');
+          } else {
+            return r.text().then(t => { throw new Error(t); });
+          }
+        });
+      } catch (err) {
+        showToast(`❌ Failed to trigger test: ${err.message}`, 'error');
+      }
       break;
+    }
   }
 });
 
