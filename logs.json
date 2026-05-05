@@ -239,6 +239,12 @@
       "timestamp": "2026-05-05T22:31:24.418758Z",
       "status": "success",
       "message": "Sent via email"
+    },
+    {
+      "reminder_id": "test_remainder",
+      "timestamp": "2026-05-05T23:01:11.428353Z",
+      "status": "success",
+      "message": "Sent via email"
     }
   ]
 }
