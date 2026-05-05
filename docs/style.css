@@ -597,6 +597,7 @@ body {
   font-family: monospace;
   font-size: 0.85rem;
   line-height: 1.5;
+  overflow-y: auto;
 }
 
 .modal-footer {
