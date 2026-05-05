@@ -408,7 +408,7 @@ function showToast(message, type = 'info') {
 // ============================================================================
 // DOM references
 // ============================================================================
-const $ = (sel) => document.querySelector(sel);
+const $ = (sel) => document.querySelector(sel) || { addEventListener: () => {}, classList: { remove: () => {}, add: () => {} }, style: {}, value: '', checked: false, textContent: '', innerHTML: '', disabled: false, readOnly: false };
 const $$ = (sel) => document.querySelectorAll(sel);
 
 const dom = {
