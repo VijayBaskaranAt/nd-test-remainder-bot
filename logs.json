@@ -155,6 +155,12 @@
       "timestamp": "2026-05-05T09:53:15.203175Z",
       "status": "success",
       "message": "Sent via email"
+    },
+    {
+      "reminder_id": "ichb_monthly_data",
+      "timestamp": "2026-05-05T14:07:08.006643Z",
+      "status": "success",
+      "message": "Sent via email"
     }
   ]
 }
