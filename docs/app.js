@@ -116,6 +116,7 @@ function parseYAML(text) {
   let inEmailRecipients = false;
   let inMetadata = false;
   let inTags = false;
+  let inMessage = false;
 
   for (const rawLine of lines) {
     const line = rawLine.replace(/\r$/, '');
@@ -141,10 +142,22 @@ function parseYAML(text) {
       inEmailRecipients = false;
       inMetadata = false;
       inTags = false;
+      inMessage = false;
       continue;
     }
 
     if (!current) continue;
+
+    // Block scalar message lines (indented under "message: |")
+    if (inMessage) {
+      if (/^      /.test(rawLine) || rawLine.trim() === '') {
+        current.message += (current.message ? '\n' : '') + rawLine.replace(/^      /, '');
+        continue;
+      } else {
+        inMessage = false;
+        current.message = current.message.trimEnd();
+      }
+    }
 
     // Detect section headers
     if (/^\s+channels:\s*$/.test(line)) {
@@ -199,7 +212,11 @@ function parseYAML(text) {
     }
 
     // Top-level keys of current reminder
-    if (/^\s+message:\s*(.+)/.test(line)) {
+    if (/^\s+message:\s*\|/.test(line)) {
+      current.message = '';
+      inMessage = true;
+      inChannels = false; inEmailRecipients = false; inMetadata = false; inTags = false;
+    } else if (/^\s+message:\s*(.+)/.test(line)) {
       current.message = RegExp.$1.trim().replace(/^["']|["']$/g, '');
       inChannels = false; inEmailRecipients = false; inMetadata = false; inTags = false;
     } else if (/^\s+schedule_type:\s*(.+)/.test(line)) {
@@ -233,7 +250,9 @@ function serializeYAML(reminders) {
   let out = 'reminders:\n';
   for (const r of reminders) {
     out += `  - id: ${r.id}\n`;
-    out += `    message: "${r.message}"\n`;
+    // Use block scalar (|) so multi-line messages and special characters never break YAML
+    const msgLines = r.message.split('\n').map(l => `      ${l}`).join('\n');
+    out += `    message: |\n${msgLines}\n`;
     if (r.schedule_type === 'interval_days') {
       out += `    schedule_type: interval_days\n`;
       out += `    interval_days: ${r.interval_days}\n`;
@@ -942,17 +961,15 @@ dom.btnRefresh.addEventListener('click', async () => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeSettings();
-    closeReminderModal();
     closeDeleteModal();
   }
 });
 
-// Close modals on overlay click
-[dom.settingsModal, dom.reminderModal, dom.deleteModal].forEach(overlay => {
+// Close only settings/delete modals on overlay click — reminder modal requires explicit Cancel/close
+[dom.settingsModal, dom.deleteModal].forEach(overlay => {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
       closeSettings();
-      closeReminderModal();
       closeDeleteModal();
     }
   });

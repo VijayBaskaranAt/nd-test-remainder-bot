@@ -567,8 +567,15 @@ body {
 
 .modal-body {
   padding: var(--sp-5) var(--sp-6);
-  max-height: 65vh;
+  max-height: 80vh;
   overflow-y: auto;
+}
+
+#rem-message {
+  resize: vertical;
+  font-family: monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .modal-footer {
