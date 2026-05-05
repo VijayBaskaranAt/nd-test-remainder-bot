@@ -278,7 +278,8 @@ body {
    Main
    --------------------------------------------------------------------------- */
 #app-main {
-  max-width: 1280px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0 var(--sp-6) var(--sp-8);
 }
@@ -318,7 +319,22 @@ body {
 
 #reminders-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
+}
+
+#reminders-table thead th:nth-child(1) { width: 100px; }  /* Status */
+#reminders-table thead th:nth-child(2) { width: 160px; }  /* ID */
+#reminders-table thead th:nth-child(3) { width: auto; }   /* Message — fills remaining space */
+#reminders-table thead th:nth-child(4) { width: 200px; }  /* Schedule */
+#reminders-table thead th:nth-child(5) { width: 160px; }  /* Next Run */
+#reminders-table thead th:nth-child(6) { width: 130px; }  /* Channels */
+#reminders-table thead th:nth-child(7) { width: 120px; }  /* Actions */
+
+#reminders-table tbody td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #reminders-table thead th {
