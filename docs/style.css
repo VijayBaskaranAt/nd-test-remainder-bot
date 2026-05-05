@@ -329,12 +329,17 @@ body {
 #reminders-table thead th:nth-child(4) { width: 200px; }  /* Schedule */
 #reminders-table thead th:nth-child(5) { width: 160px; }  /* Next Run */
 #reminders-table thead th:nth-child(6) { width: 130px; }  /* Channels */
-#reminders-table thead th:nth-child(7) { width: 120px; }  /* Actions */
+#reminders-table thead th:nth-child(7) { width: 150px; }  /* Actions */
 
 #reminders-table tbody td {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+#reminders-table tbody td:last-child {
+  overflow: visible;
+  white-space: normal;
 }
 
 #reminders-table thead th {
