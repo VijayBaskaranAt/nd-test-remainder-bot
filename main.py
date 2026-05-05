@@ -59,6 +59,8 @@ def main() -> None:
         tz = reminder.get("timezone", "Asia/Kolkata")
         raw_msg = reminder.get("message", "")
         channels = reminder.get("channels", [])
+        gchat_webhook = reminder.get("gchat_webhook") or None
+        email_recipients = reminder.get("email_recipients") or None
 
         # Render template variables
         message = render_template(raw_msg, tz)
@@ -67,7 +69,7 @@ def main() -> None:
         print(f"   Channels: {', '.join(channels)}")
 
         # Send notifications
-        results = send_notification(message, channels)
+        results = send_notification(message, channels, gchat_webhook=gchat_webhook, email_recipients=email_recipients)
 
         # Log results
         for channel, ok in results.items():

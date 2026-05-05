@@ -113,6 +113,7 @@ function parseYAML(text) {
   const lines = text.split('\n');
   let current = null;
   let inChannels = false;
+  let inEmailRecipients = false;
   let inMetadata = false;
   let inTags = false;
 
@@ -132,9 +133,12 @@ function parseYAML(text) {
         timezone: 'Asia/Kolkata',
         enabled: true,
         channels: [],
+        gchat_webhook: '',
+        email_recipients: [],
         metadata: {},
       };
       inChannels = false;
+      inEmailRecipients = false;
       inMetadata = false;
       inTags = false;
       continue;
@@ -145,6 +149,14 @@ function parseYAML(text) {
     // Detect section headers
     if (/^\s+channels:\s*$/.test(line)) {
       inChannels = true;
+      inEmailRecipients = false;
+      inMetadata = false;
+      inTags = false;
+      continue;
+    }
+    if (/^\s+email_recipients:\s*$/.test(line)) {
+      inEmailRecipients = true;
+      inChannels = false;
       inMetadata = false;
       inTags = false;
       continue;
@@ -152,6 +164,7 @@ function parseYAML(text) {
     if (/^\s+metadata:\s*$/.test(line)) {
       inMetadata = true;
       inChannels = false;
+      inEmailRecipients = false;
       inTags = false;
       continue;
     }
@@ -163,6 +176,12 @@ function parseYAML(text) {
     // Channel list items
     if (inChannels && /^\s+-\s+(.+)/.test(line)) {
       current.channels.push(RegExp.$1.trim().replace(/^["']|["']$/g, ''));
+      continue;
+    }
+
+    // Email recipients list items
+    if (inEmailRecipients && /^\s+-\s+(.+)/.test(line)) {
+      current.email_recipients.push(RegExp.$1.trim().replace(/^["']|["']$/g, ''));
       continue;
     }
 
@@ -182,25 +201,28 @@ function parseYAML(text) {
     // Top-level keys of current reminder
     if (/^\s+message:\s*(.+)/.test(line)) {
       current.message = RegExp.$1.trim().replace(/^["']|["']$/g, '');
-      inChannels = false; inMetadata = false; inTags = false;
+      inChannels = false; inEmailRecipients = false; inMetadata = false; inTags = false;
     } else if (/^\s+schedule_type:\s*(.+)/.test(line)) {
       current.schedule_type = RegExp.$1.trim().replace(/^["']|["']$/g, '');
-      inChannels = false; inMetadata = false; inTags = false;
+      inChannels = false; inEmailRecipients = false; inMetadata = false; inTags = false;
     } else if (/^\s+interval_days:\s*(.+)/.test(line)) {
       current.interval_days = parseInt(RegExp.$1.trim(), 10);
-      inChannels = false; inMetadata = false; inTags = false;
+      inChannels = false; inEmailRecipients = false; inMetadata = false; inTags = false;
     } else if (/^\s+start_date:\s*(.+)/.test(line)) {
       current.start_date = RegExp.$1.trim().replace(/^["']|["']$/g, '');
-      inChannels = false; inMetadata = false; inTags = false;
+      inChannels = false; inEmailRecipients = false; inMetadata = false; inTags = false;
     } else if (/^\s+schedule:\s*(.+)/.test(line)) {
       current.schedule = RegExp.$1.trim().replace(/^["']|["']$/g, '');
-      inChannels = false; inMetadata = false; inTags = false;
+      inChannels = false; inEmailRecipients = false; inMetadata = false; inTags = false;
     } else if (/^\s+timezone:\s*(.+)/.test(line)) {
       current.timezone = RegExp.$1.trim().replace(/^["']|["']$/g, '');
-      inChannels = false; inMetadata = false; inTags = false;
+      inChannels = false; inEmailRecipients = false; inMetadata = false; inTags = false;
     } else if (/^\s+enabled:\s*(.+)/.test(line)) {
       current.enabled = RegExp.$1.trim() === 'true';
-      inChannels = false; inMetadata = false; inTags = false;
+      inChannels = false; inEmailRecipients = false; inMetadata = false; inTags = false;
+    } else if (/^\s+gchat_webhook:\s*(.+)/.test(line)) {
+      current.gchat_webhook = RegExp.$1.trim().replace(/^["']|["']$/g, '');
+      inChannels = false; inEmailRecipients = false; inMetadata = false; inTags = false;
     }
   }
   if (current) reminders.push(current);
@@ -224,6 +246,15 @@ function serializeYAML(reminders) {
     out += `    channels:\n`;
     for (const ch of r.channels) {
       out += `      - ${ch}\n`;
+    }
+    if (r.gchat_webhook) {
+      out += `    gchat_webhook: "${r.gchat_webhook}"\n`;
+    }
+    if (r.email_recipients && r.email_recipients.length) {
+      out += `    email_recipients:\n`;
+      for (const addr of r.email_recipients) {
+        out += `      - ${addr}\n`;
+      }
     }
     if (r.metadata && (r.metadata.team || (r.metadata.tags && r.metadata.tags.length))) {
       out += `    metadata:\n`;
@@ -394,6 +425,10 @@ const dom = {
   chGoogleChat: $('#ch-google-chat'),
   chEmail: $('#ch-email'),
   chWebhook: $('#ch-webhook'),
+  remGchatWebhook: $('#rem-gchat-webhook'),
+  remEmailRecipients: $('#rem-email-recipients'),
+  gchatWebhookContainer: $('#gchat-webhook-container'),
+  emailRecipientsContainer: $('#email-recipients-container'),
   deleteModal: $('#delete-modal'),
   deleteId: $('#delete-id'),
   deleteClose: $('#delete-close'),
@@ -627,6 +662,8 @@ function openReminderModal(reminder = null) {
     dom.chGoogleChat.checked = reminder.channels.includes('google_chat');
     dom.chEmail.checked = reminder.channels.includes('email');
     dom.chWebhook.checked = reminder.channels.includes('webhook');
+    dom.remGchatWebhook.value = reminder.gchat_webhook || '';
+    dom.remEmailRecipients.value = (reminder.email_recipients || []).join(', ');
   } else {
     state.editingId = null;
     dom.modalTitle.textContent = '➕ Add Reminder';
@@ -644,8 +681,11 @@ function openReminderModal(reminder = null) {
     dom.chGoogleChat.checked = true;
     dom.chEmail.checked = false;
     dom.chWebhook.checked = false;
+    dom.remGchatWebhook.value = '';
+    dom.remEmailRecipients.value = '';
   }
   applyScheduleTypeToggle();
+  applyChannelToggle();
   updateCronPreview();
   dom.reminderModal.classList.remove('hidden');
 }
@@ -683,6 +723,14 @@ function applyScheduleTypeToggle() {
 
 dom.remScheduleType.addEventListener('change', applyScheduleTypeToggle);
 
+function applyChannelToggle() {
+  dom.gchatWebhookContainer.style.display = dom.chGoogleChat.checked ? '' : 'none';
+  dom.emailRecipientsContainer.style.display = dom.chEmail.checked ? '' : 'none';
+}
+
+dom.chGoogleChat.addEventListener('change', applyChannelToggle);
+dom.chEmail.addEventListener('change', applyChannelToggle);
+
 dom.btnAdd.addEventListener('click', () => openReminderModal());
 dom.reminderClose.addEventListener('click', closeReminderModal);
 dom.reminderCancel.addEventListener('click', closeReminderModal);
@@ -704,6 +752,12 @@ dom.reminderSave.addEventListener('click', async () => {
   if (dom.chGoogleChat.checked) channels.push('google_chat');
   if (dom.chEmail.checked) channels.push('email');
   if (dom.chWebhook.checked) channels.push('webhook');
+
+  const gchatWebhook = dom.remGchatWebhook.value.trim();
+  const emailRecipientsRaw = dom.remEmailRecipients.value.trim();
+  const emailRecipients = emailRecipientsRaw
+    ? emailRecipientsRaw.split(',').map(e => e.trim()).filter(Boolean)
+    : [];
 
   // Validation
   if (!id || !message) {
@@ -743,6 +797,8 @@ dom.reminderSave.addEventListener('click', async () => {
     timezone,
     enabled,
     channels,
+    gchat_webhook: gchatWebhook || '',
+    email_recipients: emailRecipients,
     metadata: {},
   };
   if (team) reminder.metadata.team = team;

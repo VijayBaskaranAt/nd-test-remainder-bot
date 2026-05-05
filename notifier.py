@@ -48,9 +48,9 @@ def _retry(fn, *args, **kwargs) -> bool:
 # Channel: Google Chat Webhook
 # ---------------------------------------------------------------------------
 
-def _send_google_chat(message: str) -> None:
+def _send_google_chat(message: str, webhook_url: str | None = None) -> None:
     """Send a message via Google Chat incoming webhook."""
-    webhook_url = os.environ.get("GOOGLE_CHAT_WEBHOOK")
+    webhook_url = webhook_url or os.environ.get("GOOGLE_CHAT_WEBHOOK")
     if not webhook_url:
         raise EnvironmentError("GOOGLE_CHAT_WEBHOOK environment variable not set")
 
@@ -69,13 +69,14 @@ def _send_google_chat(message: str) -> None:
 # Channel: Email (SMTP)
 # ---------------------------------------------------------------------------
 
-def _send_email(message: str) -> None:
+def _send_email(message: str, recipients: list[str] | None = None) -> None:
     """Send a notification email via SMTP."""
     host = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
     port = int(os.environ.get("EMAIL_PORT", "587"))
     user = os.environ.get("EMAIL_USER")
     password = os.environ.get("EMAIL_PASS")
-    to_addr = os.environ.get("EMAIL_TO", user)  # default: send to self
+    default_to = os.environ.get("EMAIL_TO", user)
+    to_addr = ", ".join(recipients) if recipients else default_to
 
     if not user or not password:
         raise EnvironmentError("EMAIL_USER / EMAIL_PASS not set – skipping email.")
@@ -110,14 +111,12 @@ def _send_webhook(message: str) -> None:
 # Dispatcher
 # ---------------------------------------------------------------------------
 
-CHANNEL_MAP = {
-    "google_chat": _send_google_chat,
-    "email": _send_email,
-    "webhook": _send_webhook,
-}
-
-
-def send_notification(message: str, channels: list[str]) -> dict[str, bool]:
+def send_notification(
+    message: str,
+    channels: list[str],
+    gchat_webhook: str | None = None,
+    email_recipients: list[str] | None = None,
+) -> dict[str, bool]:
     """
     Dispatch *message* to each channel in *channels*.
 
@@ -126,14 +125,16 @@ def send_notification(message: str, channels: list[str]) -> dict[str, bool]:
     results: dict[str, bool] = {}
 
     for channel in channels:
-        fn = CHANNEL_MAP.get(channel)
-        if fn is None:
-            print(f"   ⚠️  Unknown channel '{channel}' – skipping.")
-            results[channel] = False
-            continue
-
         print(f"   📤 Sending via {channel} …")
-        ok = _retry(fn, message)
+        if channel == "google_chat":
+            ok = _retry(_send_google_chat, message, gchat_webhook or None)
+        elif channel == "email":
+            ok = _retry(_send_email, message, email_recipients or None)
+        elif channel == "webhook":
+            ok = _retry(_send_webhook, message)
+        else:
+            print(f"   ⚠️  Unknown channel '{channel}' – skipping.")
+            ok = False
         results[channel] = ok
 
     return results

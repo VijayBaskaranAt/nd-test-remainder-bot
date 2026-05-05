@@ -170,6 +170,15 @@
             </div>
           </div>
         </div>
+        <div class="form-group" id="gchat-webhook-container" style="display:none;">
+          <label for="rem-gchat-webhook">Google Chat Webhook URL <span class="optional">(optional – overrides default)</span></label>
+          <input type="url" id="rem-gchat-webhook" placeholder="https://chat.googleapis.com/v1/spaces/…/messages?key=…" />
+        </div>
+        <div class="form-group" id="email-recipients-container" style="display:none;">
+          <label for="rem-email-recipients">Email Recipients <span class="optional">(optional – overrides default)</span></label>
+          <input type="text" id="rem-email-recipients" placeholder="e.g. alice@example.com, bob@example.com" />
+          <small>Comma-separated email addresses</small>
+        </div>
         <div class="form-row" id="cron-container">
           <div class="form-group flex-1">
             <label for="rem-schedule">Cron Schedule</label>
