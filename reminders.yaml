@@ -25,14 +25,3 @@ reminders:
     channels:
       - google_chat
 
-  - id: test_remainder
-    message: "Test later delete"
-    schedule: "*/2 * * * *"
-    timezone: "Asia/Kolkata"
-    enabled: true
-    channels:
-      - email
-    email_recipients:
-      - vijaybaskaran@navadhiti.com
-      - palani@navadhit.com
-
