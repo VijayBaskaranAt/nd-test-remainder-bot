@@ -458,6 +458,15 @@ const dom = {
   intervalContainer: $('#interval-container'),
   remIntervalDays: $('#rem-interval-days'),
   remStartDate: $('#rem-start-date'),
+  viewModal: $('#view-modal'),
+  viewId: $('#view-id'),
+  viewMessage: $('#view-message'),
+  viewSchedule: $('#view-schedule'),
+  viewTimezone: $('#view-timezone'),
+  viewChannels: $('#view-channels'),
+  viewEmailRecipients: $('#view-email-recipients'),
+  viewClose: $('#view-close'),
+  viewCloseBtn: $('#view-close-btn'),
 };
 
 // ============================================================================
@@ -533,6 +542,9 @@ function renderTable() {
         <td>${channelPills}</td>
         <td>
           <div class="actions-cell">
+            <button class="btn-icon" data-action="view" data-id="${r.id}" title="View">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
             <button class="btn-icon" data-action="edit" data-id="${r.id}" title="Edit">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
@@ -670,6 +682,9 @@ function openReminderModal(reminder = null) {
     dom.remId.value = reminder.id;
     dom.remId.disabled = true;
     dom.remMessage.value = reminder.message;
+    dom.remMessage.readOnly = true;
+    dom.remMessage.style.opacity = '0.6';
+    dom.remMessage.style.cursor = 'not-allowed';
     dom.remSchedule.value = reminder.schedule_type === 'cron' ? (reminder.schedule || '') : '';
     dom.remScheduleType.value = reminder.schedule_type === 'interval_days' ? 'interval_days' : 'cron';
     dom.remIntervalDays.value = reminder.interval_days || '';
@@ -689,6 +704,9 @@ function openReminderModal(reminder = null) {
     dom.remId.value = '';
     dom.remId.disabled = false;
     dom.remMessage.value = '';
+    dom.remMessage.readOnly = false;
+    dom.remMessage.style.opacity = '';
+    dom.remMessage.style.cursor = '';
     dom.remScheduleType.value = 'cron';
     dom.remIntervalDays.value = '';
     dom.remStartDate.value = '';
@@ -853,6 +871,27 @@ dom.reminderSave.addEventListener('click', async () => {
 // ============================================================================
 let pendingDeleteId = null;
 
+function openViewModal(reminder) {
+  dom.viewId.textContent = reminder.id;
+  dom.viewMessage.value = reminder.message;
+  const schedule = reminder.schedule_type === 'interval_days'
+    ? `Every ${reminder.interval_days} days from ${reminder.start_date}`
+    : reminder.schedule;
+  dom.viewSchedule.value = schedule || '';
+  dom.viewTimezone.value = reminder.timezone || '';
+  dom.viewChannels.value = (reminder.channels || []).join(', ');
+  dom.viewEmailRecipients.value = (reminder.email_recipients || []).join(', ');
+  dom.viewModal.classList.remove('hidden');
+}
+
+function closeViewModal() {
+  dom.viewModal.classList.add('hidden');
+}
+
+dom.viewClose.addEventListener('click', closeViewModal);
+dom.viewCloseBtn.addEventListener('click', closeViewModal);
+dom.viewModal.addEventListener('click', (e) => { if (e.target === dom.viewModal) closeViewModal(); });
+
 function openDeleteModal(id) {
   pendingDeleteId = id;
   dom.deleteId.textContent = id;
@@ -891,6 +930,10 @@ dom.tbody.addEventListener('click', async (e) => {
   const reminder = state.reminders.find(r => r.id === id);
 
   switch (action) {
+    case 'view':
+      if (reminder) openViewModal(reminder);
+      break;
+
     case 'edit':
       if (reminder) openReminderModal(reminder);
       break;
