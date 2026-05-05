@@ -37,77 +37,76 @@ reminders:
       - palani@navadhiti.com
 
   - id: ichb_monthly_data
-    message: |
-      run the query in HFAC prod env [mongo DB] and send the data to HFAC client :
+    message: "run the query in HFAC prod env [mongo DB] and send the data to HFAC client : 
 
-      Luiz Mazzon <luiz@certifiedhumaneinternational.org>
+Luiz Mazzon <luiz@certifiedhumaneinternational.org>
 
-      Subject: Region wise user in the label application - <<month>>
+Subject: Region wise user in the label application - <<month>>
 
-      db.guidelines.aggregate([
+db.guidelines.aggregate([
+  {
+    $match: { isActive: true }
+  },
+  {
+    $lookup: {
+      from: "customers",
+      localField: "identifier",
+      foreignField: "country",
+      as: "customers"
+    }
+  },
+  {
+    $unwind: "$customers"
+  },
+  {
+    $lookup: {
+      from: "users",
+      let: { customerId: "$customers._id" },
+      pipeline: [
         {
-          $match: { isActive: true }
-        },
-        {
-          $lookup: {
-            from: "customers",
-            localField: "identifier",
-            foreignField: "country",
-            as: "customers"
-          }
-        },
-        {
-          $unwind: "$customers"
-        },
-        {
-          $lookup: {
-            from: "users",
-            let: { customerId: "$customers._id" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $isArray: "$CustomerId" },
-                      { $in: ["$$customerId", "$CustomerId"] }
-                    ]
-                  }
-                }
-              }
-            ],
-            as: "users"
-          }
-        },
-        {
-          $unwind: {
-            path: "$users",
-            preserveNullAndEmptyArrays: true
-          }
-        },
-        {
-          $group: {
-            _id: "$name.en",
-            customersSet: { $addToSet: "$customers._id" },
-            usersSet: { $addToSet: "$users._id" }
-          }
-        },
-        {
-          $project: {
-            _id: 0,
-            country: "$_id",
-            no_of_customers: { $size: "$customersSet" },
-            no_of_users: {
-              $size: {
-                $filter: {
-                  input: "$usersSet",
-                  as: "u",
-                  cond: { $ne: ["$$u", null] }
-                }
-              }
+          $match: {
+            $expr: {
+              $and: [
+                { $isArray: "$CustomerId" }, // ✅ ensure it's an array
+                { $in: ["$$customerId", "$CustomerId"] }
+              ]
             }
           }
         }
-      ])
+      ],
+      as: "users"
+    }
+  },
+  {
+    $unwind: {
+      path: "$users",
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  {
+    $group: {
+      _id: "$name.en",
+      customersSet: { $addToSet: "$customers._id" },
+      usersSet: { $addToSet: "$users._id" }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      country: "$_id",
+      no_of_customers: { $size: "$customersSet" },
+      no_of_users: {
+        $size: {
+          $filter: {
+            input: "$usersSet",
+            as: "u",
+            cond: { $ne: ["$$u", null] }
+          }
+        }
+      }
+    }
+  }
+])"
     schedule: "0 9 28-31 * *"
     timezone: "Asia/Kolkata"
     enabled: true
