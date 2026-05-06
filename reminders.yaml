@@ -7,6 +7,9 @@ reminders:
     enabled: true
     channels:
       - google_chat
+      - email
+    email_recipients:
+      - devops@navadhiti.com
 
   - id: invoice_followup
     message: |
