@@ -1,6 +1,7 @@
 reminders:
   - id: invoice_reminder
-    message: "Send invoice for {{month}} {{year}}"
+    message: |
+      Send invoice for {{month}} {{year}}
     schedule: "0 9 2 * *"
     timezone: "Asia/Kolkata"
     enabled: true
@@ -8,7 +9,8 @@ reminders:
       - google_chat
 
   - id: invoice_followup
-    message: "Follow up on invoice for {{month}} {{year}}"
+    message: |
+      Follow up on invoice for {{month}} {{year}}
     schedule_type: interval_days
     interval_days: 45
     start_date: "2026-04-01"
@@ -18,32 +20,22 @@ reminders:
       - google_chat
 
   - id: test
-    message: "Send invoice for {{month))"
+    message: |
+      Send invoice for {{month))
     schedule: "0 9 2 * *"
     timezone: "Asia/Kolkata"
     enabled: true
     channels:
       - google_chat
 
-  - id: test_remainder
-    message: "ters remainder"
-    schedule: "*/10 * * * *"
-    timezone: "Asia/Kolkata"
-    enabled: true
-    channels:
-      - email
-    email_recipients:
-      - vijaybaskaran@navadhiti.com
-      - palani@navadhiti.com
-
   - id: ichb_monthly_data
     message: |
       run the query in HFAC prod env [mongo DB] and send the data to HFAC client :
-
+      
       Luiz Mazzon <luiz@certifiedhumaneinternational.org>
-
+      
       Subject: Region wise user in the label application - <<month>>
-
+      
       db.guidelines.aggregate([
         {
           $match: { isActive: true }
@@ -68,7 +60,7 @@ reminders:
                 $match: {
                   $expr: {
                     $and: [
-                      { $isArray: "$CustomerId" }, // ✅ ensure it's an array
+                      { $isArray: "$CustomerId" }, // â ensure it's an array
                       { $in: ["$$customerId", "$CustomerId"] }
                     ]
                   }
