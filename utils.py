@@ -32,15 +32,15 @@ LOGS_PATH = os.path.join(BASE_DIR, "logs.json")
 
 def load_reminders(path: str = CONFIG_PATH) -> list[dict]:
     """Load reminders list from the YAML config file."""
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
     return data.get("reminders", [])
 
 
 def save_reminders(reminders: list[dict], path: str = CONFIG_PATH) -> None:
     """Persist reminders list back to the YAML config file."""
-    with open(path, "w") as f:
-        yaml.dump({"reminders": reminders}, f, default_flow_style=False, sort_keys=False)
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump({"reminders": reminders}, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
 
 
 # ---------------------------------------------------------------------------

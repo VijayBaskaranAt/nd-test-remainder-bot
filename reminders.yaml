@@ -51,7 +51,7 @@ reminders:
                 $match: {
                   $expr: {
                     $and: [
-                      { $isArray: "$CustomerId" }, // Ã¢ÂÂ ensure it's an array
+                      { $isArray: "$CustomerId" } // ensure it's an array
                       { $in: ["$$customerId", "$CustomerId"] }
                     ]
                   }
