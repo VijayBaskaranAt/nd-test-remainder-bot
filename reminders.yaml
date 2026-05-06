@@ -19,18 +19,6 @@ reminders:
     channels:
       - google_chat
 
-  - id: test_remainder
-    message: |
-      ters remainder
-    schedule: "*/10 * * * *"
-    timezone: "Asia/Kolkata"
-    enabled: true
-    channels:
-      - email
-    email_recipients:
-      - vijaybaskaran@navadhiti.com
-      - palani@navadhiti.com
-
   - id: ichb_monthly_data
     message: |
       run the query in HFAC prod env [mongo DB] and send the data to HFAC client :
@@ -63,7 +51,7 @@ reminders:
                 $match: {
                   $expr: {
                     $and: [
-                      { $isArray: "$CustomerId" }, // â ensure it's an array
+                      { $isArray: "$CustomerId" }, // Ã¢ÂÂ ensure it's an array
                       { $in: ["$$customerId", "$CustomerId"] }
                     ]
                   }
