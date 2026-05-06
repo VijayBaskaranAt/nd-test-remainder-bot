@@ -19,14 +19,17 @@ reminders:
     channels:
       - google_chat
 
-  - id: test
+  - id: test_remainder
     message: |
-      Send invoice for {{month))
-    schedule: "0 9 2 * *"
+      ters remainder
+    schedule: "*/10 * * * *"
     timezone: "Asia/Kolkata"
     enabled: true
     channels:
-      - google_chat
+      - email
+    email_recipients:
+      - vijaybaskaran@navadhiti.com
+      - palani@navadhiti.com
 
   - id: ichb_monthly_data
     message: |
